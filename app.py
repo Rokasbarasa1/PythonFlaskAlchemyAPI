@@ -1,70 +1,46 @@
-import numpy as np
-from flask import Flask, request, jsonify
+import pyodbc
+from flask import Flask, jsonify
+
 app = Flask(__name__)
 
-broilers = [
-    {
-        'id': 1,
-        'title': 'Bbq chicken wings',
-        'co2': 23,
-        'distance': 233,
-        'water': 21,
-        'manufacturer': 'Rose',
-        'energy': 499,
-        'description': 'Sitas sudas yra padarytas kazkada labai senei ir niekas jo nepirko. Dazniausiai randamas siukslinese.',
-    },
-    {
-        'id': 2,
-        'title': 'Bbq chicken wings',
-        'co2': 23,
-        'distance': 233,
-        'water': 21,
-        'manufacturer': 'Rose',
-        'energy': 499,
-        'description': 'Sitas sudas yra padarytas kazkada labai senei ir niekas jo nepirko. Dazniausiai randamas siukslinese.',
-    },
-    {
-        'id': 3,
-        'title': 'Bbq chicken wings',
-        'co2': 23,
-        'distance': 233,
-        'water': 21,
-        'manufacturer': 'Rose',
-        'energy': 499,
-        'description': 'Sitas sudas yra padarytas kazkada labai senei ir niekas jo nepirko. Dazniausiai randamas siukslinese.',
-    },
 
-]
+def get_co2():
+    server = 'tcp:enviorment-server.database.windows.net'
+    database = 'EnviormentDatabase'
+    username = 'rokasbarasa1'
+    password = 'Augis123*'
+    cnxn = pyodbc.connect(
+        'DRIVER={ODBC Driver 17 for SQL Server};SERVER=' + server + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password)
+    cursor = cnxn.cursor()
+    cursor.execute('SELECT top 1 * FROM [EnviormentDatabase].[dbo].[CarbonDioxideReading]')
+    return dict(enumerate(item[0] for item in cursor))
+
+def get_settings():
+    server = 'tcp:enviorment-server.database.windows.net'
+    database = 'EnviormentDatabase'
+    username = 'rokasbarasa1'
+    password = 'Augis123*'
+    cnxn = pyodbc.connect(
+        'DRIVER={ODBC Driver 17 for SQL Server};SERVER=' + server + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password)
+    cursor = cnxn.cursor()
+    cursor.execute('SELECT * FROM [EnviormentDatabase].[dbo].[Settings]')
+    return dict(enumerate(item[0] for item in cursor))
 
 @app.route('/', methods=['GET'])
 def hello_world():
     return 'Hello World!'
 
-
-@app.route('/broilers', methods=['GET'])
-def api_all():
-    response = jsonify(broilers)
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    return response
-
-
-@app.route('/broilers/id', methods=['GET'])
+@app.route('/co2', methods=['GET'])
 def api_broiler_id():
-    if 'id' in request.args:
-        id = int(request.args['id'])
-    else:
-        return "Error: No id field provided. Please specify an id."
+    value = get_co2()
+    print(value)
+    return value
 
-    results = []
-    for broiler in broilers:
-        if broiler['id'] == id:
-            results.append(broiler)
-    return jsonify(results)
-
-@app.route('/getLiveCO2', methods=['GET'])
+@app.route('/settings', methods=['GET'])
 def api_live_co2():
-    co2 = numpy.random.random_integers(410, 3000)
-    return jsonify(co2)
+    value = get_settings()
+    print(value)
+    return value
 
 if __name__ == '__main__':
     app.run()
